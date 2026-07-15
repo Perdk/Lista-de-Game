@@ -33,11 +33,19 @@ const localizarIndice = (id) => {
   return jogos.findIndex((jogo) => jogo.id === id);
 };
 
-const filtrarJogos = (genero) => {
+const filtrarGenero = (genero) => {
   return jogos.filter(
     // .toLowerCase() -> TRANSFORMA AS LETAS EM MINUSCULAS
     // EVITA ERROS NA HORA DE REALIZAR OS FILTROS
     (filtrar) => filtrar.genero.toLowerCase() === genero.toLowerCase(),
+  );
+};
+
+const filtrarStatus = (status) => {
+  return jogos.filter(
+    // .toLowerCase() -> TRANSFORMA AS LETAS EM MINUSCULAS
+    // EVITA ERROS NA HORA DE REALIZAR OS FILTROS
+    (filtrar) => filtrar.status.toLowerCase() === status.toLowerCase(),
   );
 };
 
@@ -59,9 +67,18 @@ app.get("/jogos/id/:id", (req, res) => {
 
 app.get("/jogos/genero/:genero", (req, res) => {
   const { genero } = req.params;
-  const resultadoFiltro = filtrarJogos(genero);
+  const resultadoFiltro = filtrarGenero(genero);
   if (resultadoFiltro.length === 0) {
-    return res.send("Não há nenhum jogo com o genero escolhido");
+    return res.status(400).send("Não há nenhum jogo com o genero escolhido");
+  }
+  res.status(200).send(resultadoFiltro);
+});
+
+app.get("/jogos/status/:status", (req, res) => {
+  const { status } = req.params;
+  const resultadoFiltro = filtrarStatus(status);
+  if (resultadoFiltro.length === 0) {
+    return res.status(400).send("Não há nenhum jogo com o status escolhido");
   }
   res.status(200).send(resultadoFiltro);
 });
@@ -70,10 +87,20 @@ app.post("/jogos", (req, res) => {
   // EVITA FAZER UM IF DESSA FORMA ->
   // if ((!req.body.id, !req.body.nome, !req.body.genero, !req.body.status))
   const { nome, genero, status } = req.body;
+  const statusPermitidos = ["jogando", "pausado", "finalizado", "pendente"];
+
   if (!nome || !genero || !status) {
     // RETURN FINALIZA A FUNCAO
     // NECESSÁRIO PARA EVITAR BUGS
-    return res.status(400).send("Está faltando informações!");
+    res.status(400).send("Está faltando informações!");
+  }
+
+  if (!statusPermitidos.includes(status)) {
+    return res
+      .status(400)
+      .send(
+        "Status não aceito, pode utilizar apenas os seguintes status: jogando, pausado , finalizado, pendente",
+      );
   } else {
     const criarJogo = {
       id: proximoId,
